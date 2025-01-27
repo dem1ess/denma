@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,4 +5,143 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int            @id @default(autoincrement()) // Идентификатор пользователя
+  first_name    String // Имя пользователя
+  last_name     String? // Имя пользователя
+  middle_name   String? // Имя пользователя
+  email         String?        @unique // Уникальный email пользователя
+  phone         String         @unique
+  role          Role           @default(CLIENT) // Роль пользователя (по умолчанию клиент)
+  status        UserStatus     @default(ACTIVE) // Статус пользователя (по умолчанию активен)
+  createdAt     DateTime       @default(now()) // Дата создания пользователя
+  updatedAt     DateTime       @updatedAt // Дата последнего обновления пользователя
+  photoUrl      String? // Фото пользователя (не обязательное поле)
+  appointments  Appointment[] // Записи пользователя
+  notifications Notification[] // Уведомления для пользователя
+  finance       Finance[] // Финансовые записи пользователя
+  loyalty       Loyalty[] // Лояльность пользователя
+  employee      Employee? // Связь с мастером (если есть)
+}
+
+model Appointment {
+  id              Int               @id @default(autoincrement()) // Идентификатор записи
+  userId          Int // Идентификатор пользователя
+  user            User              @relation(fields: [userId], references: [id]) // Связь с пользователем
+  serviceId       Int // Идентификатор услуги
+  service         Service           @relation(fields: [serviceId], references: [id]) // Связь с услугой
+  appointmentTime DateTime // Время записи
+  comment         String? // Комментарий к записи
+  status          AppointmentStatus @default(SCHEDULED) // Статус записи
+  createdAt       DateTime          @default(now()) // Дата создания записи
+  updatedAt       DateTime          @updatedAt // Дата последнего обновления записи
+  reminder        DateTime? // Напоминание о визите
+}
+
+model Notification {
+  id        Int              @id @default(autoincrement()) // Идентификатор уведомления
+  userId    Int // Идентификатор пользователя
+  user      User             @relation(fields: [userId], references: [id]) // Связь с пользователем
+  type      NotificationType // Тип уведомления (email, sms, push)
+  content   String // Содержание уведомления
+  createdAt DateTime         @default(now()) // Дата создания уведомления
+}
+
+model Finance {
+  id        Int         @id @default(autoincrement()) // Идентификатор финансовой записи
+  amount    Float // Сумма
+  type      FinanceType // Тип финансовой записи (доход или расход)
+  userId    Int // Идентификатор пользователя
+  user      User        @relation(fields: [userId], references: [id]) // Связь с пользователем
+  createdAt DateTime    @default(now()) // Дата создания финансовой записи
+}
+
+model Stock {
+  id        Int      @id @default(autoincrement()) // Идентификатор товара
+  name      String // Название товара
+  quantity  Int // Количество товара
+  cost      Float // Стоимость товара
+  createdAt DateTime @default(now()) // Дата создания записи
+  updatedAt DateTime @updatedAt // Дата последнего обновления товара
+}
+
+model Loyalty {
+  id        Int      @id @default(autoincrement()) // Идентификатор лояльности
+  userId    Int // Идентификатор пользователя
+  user      User     @relation(fields: [userId], references: [id]) // Связь с пользователем
+  points    Int      @default(0) // Количество баллов лояльности
+  createdAt DateTime @default(now()) // Дата создания записи о лояльности
+  updatedAt DateTime @updatedAt // Дата последнего обновления лояльности
+}
+
+model Point {
+  id        Int        @id @default(autoincrement()) // Идентификатор точки
+  name      String // Название точки
+  location  String // Местоположение точки
+  createdAt DateTime   @default(now()) // Дата создания точки
+  updatedAt DateTime   @updatedAt // Дата последнего обновления точки
+  employees Employee[] // Мастера, работающие в точке
+}
+
+model Employee {
+  id         Int          @id @default(autoincrement()) // Идентификатор мастера
+  name       String // Имя мастера
+  role       EmployeeRole // Роль мастера (например, барбер)
+  pointId    Int // Идентификатор точки
+  point      Point        @relation(fields: [pointId], references: [id]) // Связь с точкой
+  createdAt  DateTime     @default(now()) // Дата создания мастера
+  updatedAt  DateTime     @updatedAt // Дата последнего обновления мастера
+  userId     Int          @unique // Уникальный идентификатор пользователя
+  user       User         @relation(fields: [userId], references: [id]) // Связь с пользователем (мастером)
+  photoUrl   String? // Фото мастера (не обязательное)
+  services   Service[] // Услуги, которые предоставляет мастер
+  commission Float // Процент, который мастер получает за услугу
+}
+
+model Service {
+  id           Int           @id @default(autoincrement()) // Идентификатор услуги
+  name         String // Название услуги
+  description  String? // Описание услуги (не обязательное)
+  duration     Int // Длительность услуги в минутах
+  cost         Float // Стоимость услуги
+  createdAt    DateTime      @default(now()) // Дата создания услуги
+  updatedAt    DateTime      @updatedAt // Дата последнего обновления услуги
+  employees    Employee[] // Мастера, которые предоставляют эту услугу
+  appointments Appointment[] // Обратная связь, связь с записями
+}
+
+enum Role {
+  CLIENT
+  ADMIN
+  MANAGER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum NotificationType {
+  EMAIL
+  SMS
+  PUSH
+}
+
+enum FinanceType {
+  INCOME
+  EXPENSE
+}
+
+enum EmployeeRole {
+  ADMIN
+  BARBER
+  MANAGER
 }

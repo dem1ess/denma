@@ -1,4 +1,13 @@
 {
+  "arrowParens": "always",
+  "semi": false,
+  "tabWidth": 2,
+  "printWidth": 80,
+  "bracketSpacing": true,
+  "jsxBracketSameLine": false,
+  "quoteProps": "as-needed",
+  "useTabs": false,
+  "parser": "typescript",
   "singleQuote": true,
-  "trailingComma": "all"
+  "trailingComma": "all",
 }
